@@ -65,7 +65,9 @@ class WhatsProt
     protected $nodeId = array();
     protected $loginTime;
     protected $timeout;
+    protected $cacheDir;
     public    $reader;                  // An instance of the BinaryTreeNodeReader class.
+
 
     /**
      * Default class constructor.
@@ -78,19 +80,25 @@ class WhatsProt
      *   Debug on or off, false by default.
      * @param mixed $identityFile
      *  Path to identity file, overrides default path
+     * @param string $cacheDir
+     *  Path to all cache dir
      */
-    public function __construct($number, $nickname, $debug = false, $identityFile = false)
+    public function __construct($number, $nickname, $debug = false, $identityFile = false, $cacheDir = null)
     {
         $this->writer = new BinTreeNodeWriter();
         $this->reader = new BinTreeNodeReader();
         $this->debug = $debug;
         $this->phoneNumber = $number;
 
+        if($cacheDir === null)
+        {
+            $cacheDir = __DIR__. DIRECTORY_SEPARATOR. Constants::DATA_FOLDER . DIRECTORY_SEPARATOR;
+        }
+        $this->cacheDir = $cacheDir;
+
         //e.g. ./cache/nextChallenge.12125557788.dat
-        $this->challengeFilename = sprintf('%s%s%snextChallenge.%s.dat',
-            __DIR__,
-            DIRECTORY_SEPARATOR,
-            Constants::DATA_FOLDER . DIRECTORY_SEPARATOR,
+        $this->challengeFilename = sprintf('%snextChallenge.%s.dat',
+            $cacheDir,
             $number);
 
         $this->identity = $this->buildIdentity($identityFile);
@@ -2305,7 +2313,7 @@ class WhatsProt
     protected function buildIdentity($identity_file = false)
     {
         if ($identity_file === false)
-            $identity_file = sprintf('%s%s%sid.%s.dat', __DIR__, DIRECTORY_SEPARATOR, Constants::DATA_FOLDER . DIRECTORY_SEPARATOR, $this->phoneNumber);
+            $identity_file = sprintf('%sid.%s.dat', $this->cacheDir, $this->phoneNumber);
 
         if (is_readable($identity_file)) {
             $data = urldecode(file_get_contents($identity_file));
@@ -2452,7 +2460,7 @@ class WhatsProt
             $this->mediaFileInfo['filesize'] = strlen($media);
 
             if ($this->mediaFileInfo['filesize'] < $maxsizebytes) {
-                $this->mediaFileInfo['filepath'] = tempnam(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::MEDIA_FOLDER, 'WHA');
+                $this->mediaFileInfo['filepath'] = tempnam($this->cacheDir . Constants::MEDIA_FOLDER, 'WHA');
                 file_put_contents($this->mediaFileInfo['filepath'], $media);
                 $this->mediaFileInfo['filemimetype']  = get_mime($this->mediaFileInfo['filepath']);
                 $this->mediaFileInfo['fileextension'] = getExtensionFromMime($this->mediaFileInfo['filemimetype']);
@@ -3492,9 +3500,9 @@ class WhatsProt
             $url = $media->getAttribute("url");
 
             //save thumbnail
-            file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::MEDIA_FOLDER . DIRECTORY_SEPARATOR . 'thumb_' . $filename, $media->getData());
+            file_put_contents($this->cacheDir . Constants::MEDIA_FOLDER . DIRECTORY_SEPARATOR . 'thumb_' . $filename, $media->getData());
             //download and save original
-            file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::MEDIA_FOLDER . DIRECTORY_SEPARATOR . $filename, file_get_contents($url));
+            file_put_contents($this->cacheDir . Constants::MEDIA_FOLDER . DIRECTORY_SEPARATOR . $filename, file_get_contents($url));
         }
     }
 
@@ -3509,9 +3517,9 @@ class WhatsProt
 
         if ($pictureNode != null) {
             if ($pictureNode->getAttribute("type") == "preview") {
-                $filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . 'preview_' . $node->getAttribute('from') . 'jpg';
+                $filename = $this->cacheDir . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . 'preview_' . $node->getAttribute('from') . 'jpg';
             } else {
-                $filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . $node->getAttribute('from') . '.jpg';
+                $filename = $this->cacheDir . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . $node->getAttribute('from') . '.jpg';
             }
 
             file_put_contents($filename, $pictureNode->getData());
