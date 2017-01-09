@@ -1,5 +1,6 @@
 <?php
-require_once('../src/whatsprot.class.php');
+
+require_once '../src/whatsprot.class.php';
 
 $debug = false;
 
@@ -18,22 +19,19 @@ $w = new WhatsProt($username, '', $debug);
 echo "\n\nYour accounts password: ";
 $pw = trim(fgets(STDIN));
 
-try
-{
-  $w->loginWithPassword($pw);
-}
-catch (Exception $e)
-{
-  echo "Failed to login, make sure your account is not blocked (use blockChecker.php) or check if your password is right\n\n";
-  exit(0);
+$w->connect();
+try {
+    $w->loginWithPassword($pw);
+} catch (Exception $e) {
+    echo "Failed to login, make sure your account is not blocked (use blockChecker.php) or check if your password is right\n\n";
+    exit(0);
 }
 
 $w->sendRemoveAccount();
 
 $i = 0;
-for ($i; $i < 5; $i++)
-{
-  $w->pollMessage();
+for ($i; $i < 5; $i++) {
+    $w->pollMessage();
 }
 
 $w->disconnect();
